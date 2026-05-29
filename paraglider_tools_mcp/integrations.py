@@ -55,7 +55,10 @@ class ParagliderQueryService:
         self._timeout = timeout
 
     def available_queries(self) -> dict[str, list[str]]:
-        return {name: sorted(config.routes.keys()) for name, config in self._integrations.items()}
+        return {
+            name: sorted(config.routes.keys())
+            for name, config in sorted(self._integrations.items(), key=lambda item: item[0])
+        }
 
     def query(self, integration: str, query_name: str, params: dict[str, Any] | None = None) -> Any:
         config = self._integrations.get(integration)
