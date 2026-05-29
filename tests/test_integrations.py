@@ -1,7 +1,7 @@
 import json
 import unittest
 from unittest.mock import patch
-from urllib.error import URLError
+from urllib.error import HTTPError, URLError
 
 from paraglider_tools_mcp.integrations import IntegrationConfig, ParagliderQueryService, QueryIntegrationError
 
@@ -12,6 +12,17 @@ class _FakeResponse:
 
     def read(self):
         return json.dumps(self._payload).encode("utf-8")
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, exc_type, exc, traceback):
+        return False
+
+
+class _InvalidJsonResponse:
+    def read(self):
+        return b"not-json"
 
     def __enter__(self):
         return self
@@ -63,6 +74,38 @@ class ParagliderQueryServiceTests(unittest.TestCase):
 
         with self.assertRaises(QueryIntegrationError):
             self.service.query("paraglider-sites", "forecasting")
+
+    @patch("paraglider_tools_mcp.integrations.urlopen")
+    def test_query_wraps_http_errors(self, mock_urlopen):
+        mock_urlopen.side_effect = HTTPError(
+            url="http://sites.local/api/query/forecasting",
+            code=500,
+            msg="server error",
+            hdrs=None,
+            fp=None,
+        )
+
+        with self.assertRaises(QueryIntegrationError):
+            self.service.query("paraglider-sites", "forecasting")
+
+    @patch("paraglider_tools_mcp.integrations.urlopen")
+    def test_query_wraps_invalid_json_payloads(self, mock_urlopen):
+        mock_urlopen.return_value = _InvalidJsonResponse()
+
+        with self.assertRaises(QueryIntegrationError):
+            self.service.query("paraglider-sites", "forecasting")
+
+    @patch("paraglider_tools_mcp.integrations.urlopen")
+    def test_query_encodes_multi_value_params(self, mock_urlopen):
+        mock_urlopen.return_value = _FakeResponse({"ok": True})
+
+        self.service.query("paraglider-sites", "forecasting", {"brand": ["phi", "ozone"]})
+
+        request = mock_urlopen.call_args.args[0]
+        self.assertEqual(
+            "http://sites.local/api/query/forecasting?brand=phi&brand=ozone",
+            request.full_url,
+        )
 
     def test_query_rejects_unknown_integration(self):
         with self.assertRaises(QueryIntegrationError):

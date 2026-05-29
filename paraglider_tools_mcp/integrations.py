@@ -51,6 +51,7 @@ class ParagliderQueryService:
     """Unified query service across paragliding applications."""
 
     def __init__(self, integrations: dict[str, IntegrationConfig] | None = None, timeout: float = 10.0) -> None:
+        """Create a query service with optional custom integrations and HTTP timeout (seconds)."""
         self._integrations = integrations or _default_integrations()
         self._timeout = timeout
 
