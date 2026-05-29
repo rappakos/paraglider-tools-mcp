@@ -72,6 +72,15 @@ class ParagliderQueryServiceTests(unittest.TestCase):
         with self.assertRaises(QueryIntegrationError):
             self.service.query("paraglider-sites", "missing")
 
+    def test_available_queries_returns_sorted_mapping(self):
+        self.assertEqual(
+            {
+                "paraglider-sites": ["forecasting"],
+                "paraglider-tests": ["recent_certifications"],
+            },
+            self.service.available_queries(),
+        )
+
 
 if __name__ == "__main__":
     unittest.main()
