@@ -74,12 +74,12 @@ async def search_wings(
         params["classification"] = classification
     return await _get(TESTS_API_BASE_URL, "/search", params=params)
 
+@mcp.custom_route("/", methods=["GET"])
+async def index(request):
+    html = Path(__file__).parent.joinpath("index.html").read_text(encoding="utf-8")
+    return HTMLResponse(html)
 
 if __name__ == "__main__":
     mcp.run(transport="streamable-http", host="127.0.0.1", port=8080)
 
 
-@mcp.custom_route("/", methods=["GET"])
-async def index(request):
-    html = Path(__file__).parent.joinpath("index.html").read_text(encoding="utf-8")
-    return HTMLResponse(html)
