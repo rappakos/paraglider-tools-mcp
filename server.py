@@ -1,9 +1,11 @@
 import os
+from pathlib import Path
 from typing import Optional
 
 import httpx
 from dotenv import load_dotenv
 from fastmcp import FastMCP
+from starlette.responses import HTMLResponse
 
 load_dotenv()
 
@@ -75,3 +77,9 @@ async def search_wings(
 
 if __name__ == "__main__":
     mcp.run(transport="streamable-http", host="127.0.0.1", port=8080)
+
+
+@mcp.custom_route("/", methods=["GET"])
+async def index(request):
+    html = Path(__file__).parent.joinpath("index.html").read_text(encoding="utf-8")
+    return HTMLResponse(html)
